@@ -62,7 +62,7 @@ void 	server::init()
 {
 	// Configure network link
 	link.set_address(SERVER_DEFAULT_ADDRESS);
-	link.set_port(SERVER_DEFAULT_PORT);
+	link.set_port(KUtils::to_int(SERVER_DEFAULT_PORT));
 	link.set_type(KSocket::TCP4);
 
 	// Configure tree
