@@ -1,0 +1,75 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          regserver
+# Required-Start:    $network
+# Required-Stop:     $network
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Description:       OCADrone registry server
+### END INIT INFO
+
+# Daemon configuration
+NAME="regserver"
+DAEMON="/ocadrone/apps/registry/regserver"
+RUNAS="root"
+PIDFILE="/var/run/regserver.pid"
+
+# Regserver configuration
+CONFIG="/ocadrone/apps/registry/config.cfg"
+ARGS="-p 5006 -a 127.0.0.1"
+
+# Return process status.
+do_status()
+{
+  if [ -f $PIDFILE ]; then
+    local PID=`cat $PIDFILE`
+    if [ -z $PID ]; then
+      return 1
+    elif kill -0 $PID; then
+      return 0
+    fi
+  fi
+  return 1
+}
+
+# Start process in background.
+do_start()
+{
+  if do_status; then
+    echo "Service '$NAME' already running" >&2
+    return 1
+  else
+    echo "Starting service '$NAME'..."
+    local CMD="$DAEMON $ARGS & echo \$!"
+    su -c "$CMD $RUNAS" > "$PIDFILE"
+    if do_status; then
+      echo "Service '$NAME' started"
+    else
+      echo "Error while starting service '$NAME'" >&2
+      return 1
+    fi
+  fi
+  return 0
+}
+
+# Stop process.
+do_stop()
+{
+  if ! do_status; then
+    echo "Service '$NAME' is not running" >&2
+    return 1
+  else
+    echo "Stopping service '$NAME' ..." >&2
+    kill -15 $(cat "$PIDFILE") && rm -f "$PIDFILE"
+    echo "Service '$NAME' stopped"
+  fi
+  return 0
+}
+
+case $1 in
+  start) do_start;;
+  stop) do_stop;;
+  status) if do_status; then echo "Running"; else echo "Stopped"; fi;;
+  restart) do_stop; do_start;;
+  *) echo "usage: $0 {start|stop|restart|status}";;
+esac

@@ -5,42 +5,47 @@
 
 # Variables
 # =========
-NAME_SERVER 	=	regserver
-NAME_CLIENT 	= regclient
+NAME_SERVER 			=		regserver
+NAME_CLIENT 			= 	regclient
+NAME_INITD 				=		regserver
+NAME_SYSTEMD 			=		regserver.service
 
-PATH_ROOT 		=	.
-PATH_SOURCE 	=	./source
-PATH_INCLUDE 	=	./include
+PATH_ROOT 				=		.
+PATH_SOURCE 			=		./source
+PATH_INCLUDE 			=		./include
 
-INSTALL_PATH 	= 	/ocadrone/apps/registry
-
+INSTALL_PATH 			= 	/ocadrone/apps/registry
+INSTALL_INITD 		= 	/etc/init.d
+INSTALL_SYSTEMD 	=		/usr/lib/systemd/system
 
 # Sources
 # =======
-SRC_SERVER 		= 	$(PATH_SOURCE)/main_server.cpp 	\
-									$(PATH_SOURCE)/server.cpp
-
-SRC_CLIENT 		= 	$(PATH_SOURCE)/main_client.cpp
-
+SRC_SERVER 				= 	$(PATH_SOURCE)/main_server.cpp 	\
+											$(PATH_SOURCE)/server.cpp
+SRC_CLIENT 				= 	$(PATH_SOURCE)/main_client.cpp
+SRC_INITD 				=		$(PATH_SOURCE)/regserver.initd
+SRC_SYSTEMD 			=		$(PATH_SOURCE)/regserver.systemd
 
 # Compilation options
 # ===================
-CC 					= 	g++
-CFLAGS 			= 	-W -Wall -ansi -pedantic -O3 -std=c++11 -Wl,-rpath /usr/local/lib/
-CLIBS 			= 	-lKNM -lAIRegistry -lpthread
+CC 			= 	g++
+CFLAGS 	= 	-W -Wall -ansi -pedantic -O3 -std=c++11 -Wl,-rpath /usr/local/lib/
+CLIBS 	= 	-lKNM -lAIRegistry -lpthread
 
 
 # Rules configuration
 # ===================
-.PHONY:		help clean 								\
-			build build-server build-client 		\
-			install install-server install-client 	\
-			remove remove-server remove-client
+.PHONY:		help clean 															\
+					build build-server build-client 				\
+					install install-server install-client 	\
+					install-initd install-systemd						\
+					remove remove-server remove-client
 
-.SILENT:	help clean 								\
-			build build-server build-client 		\
-			install install-server install-client 	\
-			remove remove-server remove-client
+.SILENT:	help clean 															\
+					build build-server build-client 				\
+					install install-server install-client 	\
+					install-initd install-systemd						\
+					remove remove-server remove-client
 
 
 # Basic Rules
@@ -48,8 +53,8 @@ CLIBS 			= 	-lKNM -lAIRegistry -lpthread
 $(NAME): 	help
 
 help:
-			@echo "Registry tools Makefile help"
-			@echo "============================"
+			@echo "Registry tools' Makefile help"
+			@echo "============================="
 
 			@echo "[*] Compilation"
 			@echo "    Type 'make build' to build the tools."
@@ -58,6 +63,8 @@ help:
 			@echo ""
 			@echo "[*] Installation"
 			@echo "    Type 'make install' (as root)."
+			@echo "    To install initd script: make install-initd"
+			@echo "    To install systemd script: make install-systemd"
 			@echo ""
 			@echo "[*] Removing"
 			@echo "    Type 'make remove'."
@@ -112,6 +119,19 @@ install-client:
 			cp $(NAME_CLIENT) $(INSTALL_PATH)
 			@echo "Done."
 
+install-initd:
+			@echo "---"
+			@echo "Installing registry server init.d script"
+			if [ -e $(SRC_INITD) ]; then cp $(SRC_INITD) $(INSTALL_INITD)/$(NAME_INITD); fi
+			@echo "Done."
+
+install-systemd:
+			@echo "---"
+			@echo "Installing registry server systemd script"
+			if [ -e $(SRC_SYSTEMD) ]; then cp $(SRC_SYSTEMD) $(INSTALL_SYSTEMD)/$(NAME_SYSTEMD); fi
+			@echo "Done."
+
+
 
 # Removing & cleaning rules
 # =========================
@@ -121,12 +141,14 @@ remove:
 
 remove-server:
 			@echo "Removing server"
-			rm $(INSTALL_PATH)/$(NAME_SERVER)
+			if [ -e $(INSTALL_PATH)/$(NAME_SERVER) ]; then rm $(INSTALL_PATH)/$(NAME_SERVER); fi
+			if [ -e $(INSTALL_INITD)/$(NAME_INITD) ]; then rm $(INSTALL_INITD)/$(NAME_INITD); fi
+			if [ -e $(INSTALL_SYSTEMD)/$(NAME_SYSTEMD) ]; then rm $(INSTALL_SYSTEMD)/$(NAME_SYSTEMD); fi
 			@echo "Done."
 
 remove-client:
 			@echo "Removing client"
-			rm $(INSTALL_PATH)/$(NAME_CLIENT)
+			if [ -e $(INSTALL_PATH)/$(NAME_CLIENT) ]; then rm $(INSTALL_PATH)/$(NAME_CLIENT); fi
 			@echo "Done."
 
 clean:
